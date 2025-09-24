@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BEAR HUGS Invoice</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; background-color: #f9f9fb; }
+    h1 { text-align: center; color: #333; margin-bottom: 5px; font-size: 28px; letter-spacing: 2px; }
+    .logo { text-align: center; margin-bottom: 10px; }
+    .logo img { max-height: 100px; }
+
+    .invoice-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      background: linear-gradient(to right, #ffdee9, #b5fffc); 
+      padding: 15px 20px; 
+      border-radius: 10px; 
+      margin-bottom: 20px; 
+    }
+    .invoice-header div { font-size: 14px; color: #333; }
+    .invoice-header strong { color: #111; }
+
+    .customer-info { 
+      display: flex; 
+      justify-content: space-between; 
+      background: #fff; 
+      padding: 15px; 
+      border: 1px solid #ddd; 
+      border-radius: 10px; 
+      margin-bottom: 20px;
+    }
+    input { padding: 8px; margin: 5px 0; width: 260px; border: 1px solid #ccc; border-radius: 6px; }
+
+    label { font-weight: bold; font-size: 14px; }
+
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-top: 20px; 
+      background: #fff; 
+      border-radius: 10px; 
+      overflow: hidden; 
+    }
+    th, td { border: 1px solid #eee; padding: 10px; text-align: left; font-size: 14px; }
+    th { background-color: #ffdee9; color: #333; }
+    tr:nth-child(even) { background-color: #f9f9fb; }
+
+    .total { text-align: right; font-weight: bold; margin-top: 20px; font-size: 18px; color: #222; }
+
+    button { 
+      padding: 12px 20px; 
+      margin-top: 20px; 
+      display: block; 
+      background: #ff6699; 
+      color: white; 
+      border: none; 
+      border-radius: 8px; 
+      font-size: 14px; 
+      cursor: pointer; 
+    }
+    button:hover { background: #ff4d88; }
+  </style>
+</head>
+<body>
+
+  <!-- Logo -->
+  <div class="logo">
+    <img src="WhatsApp Image 2025-09-14 at 08.35.02_c01960df.jpg" alt="BEAR HUGS Logo">
+  </div>
+
+  <h1>INVOICE</h1>
+
+  <!-- Invoice Header -->
+  <div class="invoice-header">
+    <div>
+      <strong>Phone:</strong> +91-8004241888<br>
+      <strong>Email:</strong> care@bearhugs.in
+    </div>
+    <div>
+      <strong>Date & Time:</strong> <span id="dateTime"></span>
+    </div>
+  </div>
+
+  <!-- Customer Info -->
+  <div class="customer-info">
+    <div>
+      <label>Customer Name:</label><br>
+      <input type="text" id="custName" placeholder="Enter customer name">
+    </div>
+    <div>
+      <label>Phone Number:</label><br>
+      <input type="text" id="custPhone" placeholder="Enter phone number">
+    </div>
+  </div>
+
+  <!-- Barcode Input -->
+  <label for="barcode">Scan Product Code:</label><br>
+  <input type="text" id="barcode" placeholder="Scan barcode here" autofocus>
+
+  <!-- Invoice Table -->
+  <table id="invoiceTable">
+    <thead>
+      <tr>
+        <th>Department</th>
+        <th>Category</th>
+        <th>Price</th>
+        <th>Qty</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2 id="grandTotal" class="total">Grand Total: ₹0</h2>
+
+  <button onclick="window.print()">Print / Save Invoice</button>
+
+  <script>
+    // Departments
+    const departments = {
+      23: "E&D",
+      24: "Giggle & Games",
+      25: "Stationery",
+      26: "Bags",
+      27: "Lamp & Lights",
+      28: "Cards & Wraps",
+      29: "Novelty",
+      30: "Keychains"
+    };
+
+    // Categories
+    const categories = {
+      13: "350-500 ml cold water bottle",
+      14: "500-1000 ml cold water bottle",
+      15: "1000 ml and above cold water bottle",
+      16: "350-500 ml hot water bottle",
+      17: "500-1000 ml hot water bottle",
+      18: "1000 ml and above hot bottle",
+      19: "Lunch box",
+      20: "Novelty Mugs",
+      21: "Anytime Mugs",
+      22: "Stuffed Animals & Plush Toys",
+      23: "Creative & Educational Toys",
+      24: "Cheep Toys",
+      25: "Gaming Robot & Vehicles",
+      26: "Dress Up & Pretend Play",
+      27: "Art & Craft",
+      28: "Diaries & Planners",
+      29: "Journals & Notebooks",
+      30: "Pen, Pencil, Markers & Cases",
+      31: "Desk Accessories",
+      32: "Backpacks",
+      33: "Mommy Bags",
+      34: "Anytime Bags",
+      35: "Lunch Bags",
+      36: "Tote Bags",
+      37: "Study Lamp",
+      38: "Desk Lamp",
+      39: "Novelty Lights",
+      40: "Wraps",
+      41: "Cards - Birthday, Love, Anniversary",
+      42: "Cards",
+      43: "Keychains"
+    };
+
+    const invoiceTable = document.querySelector("#invoiceTable tbody");
+    const grandTotalEl = document.getElementById("grandTotal");
+    const barcodeInput = document.getElementById("barcode");
+    const dateTimeEl = document.getElementById("dateTime");
+
+    let grandTotal = 0;
+
+    function updateDateTime() {
+      const now = new Date();
+      dateTimeEl.textContent = now.toLocaleString();
+    }
+    updateDateTime();
+
+    // ✅ Decode according to format: BHS + Dept(2) + Cat(2) + Supplier(2 ignore) + Price(3) + Variant(2 ignore)
+    function decodeProductCode(code) {
+      if (!code.startsWith("BHS")) {
+        return null;
+      }
+
+      const deptCode = parseInt(code.substring(3, 5));
+      const catCode = parseInt(code.substring(5, 7));
+      const price = parseInt(code.substring(9, 12));
+
+      return {
+        dept: departments[deptCode] || "Unknown Dept",
+        category: categories[catCode] || "Unknown Category",
+        price: price || 0
+      };
+    }
+
+    barcodeInput.addEventListener("keypress", function(e) {
+      if (e.key === "Enter") {
+        const code = barcodeInput.value.trim();
+
+        if (code.length >= 12) {
+          const product = decodeProductCode(code);
+
+          if (product) {
+            addProductToInvoice(product);
+          } else {
+            alert("Invalid code. Must start with BHS.");
+          }
+        } else {
+          alert("Invalid product code length!");
+        }
+
+        barcodeInput.value = "";
+      }
+    });
+
+    function addProductToInvoice(product) {
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+        <td>${product.dept}</td>
+        <td>${product.category}</td>
+        <td>₹${product.price}</td>
+        <td>1</td>
+        <td>₹${product.price}</td>
+      `;
+
+      invoiceTable.appendChild(row);
+
+      grandTotal += product.price;
+      grandTotalEl.textContent = "Grand Total: ₹" + grandTotal;
+    }
+  </script>
+</body>
+</html>
